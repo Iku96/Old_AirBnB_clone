@@ -1,45 +1,52 @@
 #!/usr/bin/python3
-# AirBnB_clone
-# Author: Ikundwila Mwambona <ikumwana@gmail.com>
-
-import uuid
 from datetime import datetime
-"""
-This module contains the BaseModel class, which defines common attributes for other classes.
-"""
-
+import uuid
 
 class BaseModel:
     """
-    The BaseModel class serves as a base class for other modules in the project.
-    It contains common attributes and methods that are inherited by other classes.
+    Base class for other classes in the project.
+
+    Public instance attributes:
+        id: string - assigned with a unique UUID when an instance is created.
+            The UUID is generated using the uuid.uuid4() function and then converted to a string.
+        created_at: datetime - assigned with the current datetime when an instance is created.
+        updated_at: datetime - assigned with the current datetime when an instance is created
+            and updated every time the object is changed.
     """
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         """
-        Initializes the BaseModel instance.
+        Initialize a new instance of BaseModel.
 
-        Attributes:
-        - id (str): Unique identifier for the instance.
-        - created_at (datetime): Date and time of instance creation.
-        - updated_at (datetime): Date and time of instance update.
-        """
-        self.id = str(uuid.uuid4())  # Assign a unique ID using uuid.uuid4()
-        self.created_at = datetime.now()  # Set the creation date and time
-        self.updated_at = datetime.now()  # Set the update date and time
+        Args:
+            *args: Variable length argument list (not used in this implementation).
+            **kwargs: Arbitrary keyword arguments.
+                Each key of the dictionary represents an attribute name, and the corresponding value
+                is the value for that attribute.
 
-    def __str__(self):
-        """
-        Return a string representation of the object.
+        If kwargs is not empty:
+            Each key-value pair in kwargs is set as an attribute of the instance.
+            The 'created_at' and 'updated_at' attributes are converted from strings to datetime objects.
 
-        Format: {<class name>] (<self.id>) <self.__dict__>
+        Otherwise:
+            A new instance is created with a unique 'id' attribute generated using uuid.uuid4() and converted to a string.
+            The 'created_at' attribute is set to the current datetime.
         """
-        return "[{}] ({}) {}".format(self.__class__.__name__,self.id,self.__dict__)
+        if kwargs:
+            for key, value in kwargs.items():
+                if key != "__class__":
+                    if key in ["created_at", "updated_at"]:
+                        setattr(self, key, datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f"))
+                    else:
+                        setattr(self, key, value)
+        else:
+            self.id = str(uuid.uuid4())
+            self.created_at = datetime.now()
+            self.updated_at = self.created_at
 
     def save(self):
         """
-        Update the update_at attribute with the current datetime.
-        :return:
+        Update the 'updated_at' attribute with the current datetime.
         """
         self.updated_at = datetime.now()
 
@@ -47,15 +54,13 @@ class BaseModel:
         """
         Return a dictionary representation of the object.
 
-        The dictionary contains all keys/values of __dict__ of the instance,
-        with additional keys '__class__', 'created_at', and 'updated_at'.
-        The created_at and updated_at attribute are converted to the specified format, (%Y-%m-%dT%H:%M:%S.%f).
-
         Returns:
-        - dict: Dictionary representation of the object.
+            dict: A dictionary containing all keys/values of the instance's attributes.
+                The dictionary also includes the '__class__' key with the class name of the object,
+                and the 'created_at' and 'updated_at' keys with their corresponding values in ISO format.
         """
         obj_dict = self.__dict__.copy()
         obj_dict['__class__'] = self.__class__.__name__
-        obj_dict['created_at'] = datetime.strptime(self.created_at, "%Y-%m-%dT%H:%M:%S.%f").isoformat()
-        obj_dict['updated_at'] = datetime.strptime(self.updated_at, "%Y-%m-%dT%H:%M:%S.%f").isoformat()
+        obj_dict['created_at'] = self.created_at.isoformat()
+        obj_dict['updated_at'] = self.updated_at.isoformat()
         return obj_dict
