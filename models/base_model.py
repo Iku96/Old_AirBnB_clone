@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 from datetime import datetime
 import uuid
+from models import storage
 
 class BaseModel:
     """
@@ -23,32 +24,26 @@ class BaseModel:
             **kwargs: Arbitrary keyword arguments.
                 Each key of the dictionary represents an attribute name, and the corresponding value
                 is the value for that attribute.
-
-        If kwargs is not empty:
-            Each key-value pair in kwargs is set as an attribute of the instance.
-            The 'created_at' and 'updated_at' attributes are converted from strings to datetime objects.
-
-        Otherwise:
-            A new instance is created with a unique 'id' attribute generated using uuid.uuid4() and converted to a string.
-            The 'created_at' attribute is set to the current datetime.
         """
         if kwargs:
             for key, value in kwargs.items():
                 if key != "__class__":
-                    if key in ["created_at", "updated_at"]:
-                        setattr(self, key, datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f"))
-                    else:
-                        setattr(self, key, value)
+                    setattr(self, key, value)
+                if "created_at" in kwargs:
+                    self.created_at = datetime.strptime(kwargs["created_at"], "%Y-%m-%dT%H:%M:%S.%f")
+                if "updated_at" in kwargs:
+                    self.updated_at = datetime.strptime(kwargs["updated_at"], "%Y-%m-%dT%H:%M:%S.%f")
         else:
             self.id = str(uuid.uuid4())
             self.created_at = datetime.now()
-            self.updated_at = self.created_at
+            self.updated_at = datetime.now()
+            storage.new(self)
 
     def save(self):
-        """
-        Update the 'updated_at' attribute with the current datetime.
-        """
+        """Save the instance to the storage"""
         self.updated_at = datetime.now()
+        storage.save()
+
 
     def to_dict(self):
         """
