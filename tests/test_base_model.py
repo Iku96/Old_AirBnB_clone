@@ -1,95 +1,65 @@
 #!/usr/bin/python3
 import unittest
-from datetime import datetime
 from models.base_model import BaseModel
+from models import storage
+from datetime import datetime
+import uuid
+
 
 class TestBaseModel(unittest.TestCase):
-    """
-    Unit tests for the BaseModel class.
-    """
+    """Test cases for the BaseModel class"""
 
-    def setUp(self):
-        """
-        Set up the test fixture. Create an instance of BaseModel.
-        """
-        self.model = BaseModel()
+    def test_save(self):
+        """Test saving a BaseModel instance"""
+        bm = BaseModel()
+        bm.save()
+        self.assertIsInstance(bm.updated_at, datetime)
 
-        def test_id_is_unique_string(self):
-            """
-            Test that the id attribute is a unique string.
-            """
-            self.assertIsInstance(self.model.id, str)
-            self.assertNotEqual(self.mode.id, '')
+    def test_to_dict(self):
+        """Test converting a BaseModel instance to a dictionary"""
+        bm = BaseModel()
+        bm_dict = bm.to_dict()
+        self.assertEqual(bm_dict['__class__'], 'BaseModel')
+        self.assertIsInstance(bm_dict['created_at'], str)
+        self.assertIsInstance(bm_dict['updated_at'], str)
 
-        def test_created_at_is_datetime(self):
-            """
-            Test that the created_at attribute is a datetime object.
-            """
-            self.assertIsInstance(self.model.created_at, datetime)
-        
-        def test_updated_at_is_datetime(self):
-            """
-            Test that the updated_at attribute is a datetime object.
-            """
-            self.assertIsInstance(self.model.updated_at, datetime)
+    def test_from_dict(self):
+        """Test creating a BaseModel instance from a dictionary"""
+        data = {
+            'id': str(uuid.uuid4()),
+            'created_at': datetime.now().isoformat(),
+            'updated_at': datetime.now().isoformat(),
+            '__class__': 'BaseModel'
+        }
+        bm = BaseModel(**data)
+        self.assertEqual(bm.id, data['id'])
+        self.assertEqual(bm.created_at.isoformat(), data['created_at'])
+        self.assertEqual(bm.updated_at.isoformat(), data['updated_at'])
+        self.assertEqual(type(bm.created_at), datetime)
+        self.assertEqual(type(bm.updated_at), datetime)
+        self.assertEqual(bm.__class__.__name__, 'BaseModel')
 
-        def test_str_method(self):
-            """
-            Test the __str__ method of BaseModel.
-            """
-            expected_output = "[BaseModel] ({}) {}".format(self.model.id, self.model.__dict__)
-            self.assertEqual(str(self.model), expected_output)
-        def test_save_updates_updated_at(self):
-            """
-            Test that the save method updates the updates_at attribute.
-            """
-            old_updated_at = seld.model.updated_at
-            self.model.save()
-            self.assertNotEqual(self.model.updated_at, old_updated_at)
+    def test_save_reload(self):
+        """Test saving and reloading a BaseModel instance from storage"""
+        bm = BaseModel()
+        bm.save()
+        bm_id = bm.id
 
-            def test_to_dict_returns_dictionary(self):
-                """
-                Test that the to_dict method returns a dictionary.
-                """
-                obj_dict = self.model.to.dict()
-                self.assertIsInstance(obj_dict, dict)
+        # Create a new instance and reload data from storage
+        bm_new = BaseModel()
+        storage.reload()
 
-            def test_to_dict_contains_correct_keys(self):
-                """
-                Test that the to_dict method contains the correct keys.
-                """
-                expected_keys = ['id', 'created_at', 'updated_at, '__class__]
-                obj.dict = self.model.to_dict()
-                self.assertCountEqual(obj_dict.keys(), expected_keys)
+        # Check if the new instance matches the reloaded data
+        self.assertEqual(bm_new.id, bm_id)
+        self.assertEqual(bm_new.created_at, bm.created_at)
+        self.assertEqual(bm_new.updated_at, bm.updated_at)
 
-            def test_to_dict_id_is_string(self):
-                """
-                Test that the 'id' key in the to_dict method is a string.
-                """
-                obj_dict = self.model.to_dict()
-                self.assertIsInstance(obj_dict['id'], str)
+    def test_str(self):
+        """Test string representation of a BaseModel instance"""
+        bm = BaseModel()
+        bm_str = str(bm)
+        self.assertEqual(bm_str, "[BaseModel] ({}) {}".format(bm.id, bm.__dict__))
 
-            def test_to_dict_created_at_is_string_in_iso_format(self):
-                """
-                Test that the 'created_at' key in the to_dict method is a string in ISO format.
-                """
-                obj_dict = self.model.to_dict()
-                self.assertIsInstance(obj_dict['created_at'], str)
-                self.assertEqual(datetime.fromisoformat(obj_dict['created_at']), self.model.created_at)
-            def test_to_dict_updated_at_is_string_in_iso_format(self):
-        """
-        Test that the 'updated_at' key in the to_dict method is a string in ISO format.
-        """
-        obj_dict = self.model.to_dict()
-        self.assertIsInstance(obj_dict['updated_at'], str)
-        self.assertEqual(datetime.fromisoformat(obj_dict['updated_at']), self.model.updated_at)
-
-    def test_to_dict_class_name_is_base_model(self):
-        """
-        Test that the '__class__' key in the to_dict method is set to 'BaseModel'.
-        """
-        obj_dict = self.model.to_dict()
-        self.assertEqual(obj_dict['__class__'], 'BaseModel')
 
 if __name__ == '__main__':
     unittest.main()
